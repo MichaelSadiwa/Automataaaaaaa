@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automata Validator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+            box-sizing: border-box; /* Added for better layout */
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .valid {
+            color: green;
+            font-weight: bold;
+        }
+        .invalid {
+            color: red;
+            font-weight: bold;
+        }
+        .regex-selector {
+            margin-bottom: 15px;
+        }
+        .automata-section {
+            margin-top: 30px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab {
+            padding: 10px 15px;
+            background-color: #eee;
+            cursor: pointer;
+            margin-right: 5px;
+            border-top-left-radius: 5px; /* Added for style */
+            border-top-right-radius: 5px; /* Added for style */
+        }
+        .tab.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 15px;
+            border: 1px solid #ddd;
+            min-height: 100px; /* Adjusted min-height */
+            border-top: none; /* Avoid double border with active tab */
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .diagram-placeholder {
+            text-align: center;
+            padding: 20px; /* Adjusted padding */
+            background-color: #f9f9f9;
+            border: 2px dashed #ccc;
+            margin-top: 20px;
+        }
+        select {
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 15px;
+            box-sizing: border-box; /* Added for better layout */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px; /* Added margin for spacing */
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .pattern-display {
+            font-family: monospace;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            white-space: pre-wrap; /* Changed for better readability of long patterns */
+            word-break: break-all; /* Added for long unbreakable patterns */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Automata Validator</h1>
+
+        <div class="regex-selector">
+            <h3>Select Regular Expression:</h3>
+            <select id="regex-pattern">
+                <option value="pattern1">Pattern 1: Binary Strings (0s and 1s)</option>
+                <option value="pattern2">Pattern 2: Language with a's and b's</option>
+            </select>
+            <div id="current-pattern" class="pattern-display"></div>
+        </div>
+
+        <h3>Enter strings to validate (one per line):</h3>
+        <textarea id="input-strings" placeholder="Enter strings here..."></textarea>
+
+        <button id="validate-btn">Validate Strings</button>
+
+        <div class="results" id="results">
+            <h3>Validation Results:</h3>
+            <div id="result-content">Results will appear here</div>
+        </div>
+
+        <div class="automata-section">
+            <h2>Automata Representations</h2>
+
+            <div class="tabs">
+                <div class="tab active" data-tab="dfa">DFA</div>
+                <div class="tab" data-tab="cfg">CFG</div>
+                <div class="tab" data-tab="pda">PDA</div>
+            </div>
+
+            <div id="dfa" class="tab-content active">
+                <h3>Deterministic Finite Automaton</h3>
+                <div class="diagram-placeholder">
+                    [DFA diagram will be placed here]
+                </div>
+            </div>
+
+            <div id="cfg" class="tab-content">
+                <h3>Context-Free Grammar</h3>
+                <div class="diagram-placeholder">
+                    [CFG productions will be placed here]
+                </div>
+            </div>
+
+            <div id="pda" class="tab-content">
+                <h3>Pushdown Automaton</h3>
+                <div class="diagram-placeholder">
+                    [PDA diagram will be placed here]
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define the regex patterns
+        const patterns = {
+            pattern1: "(1+0)*(11+00+101+010)(11+00)*(11+00+0+1)(1+0+11)(11+00)*(101+000+111)(1+0)*(101+000+111+001+100)(11+00+1+0)*",
+            pattern2: "(a+b)*(aa+bb)(aa+bb)*(ab+ba+aba)(bab+aba+bbb)(a+b+bb+aa)*(bb+aa+aba)(aaa+bab+bba)(aaa+bab+bba)*"
+        };
+
+        // Update the pattern display when the page loads or when the selection changes
+        function updatePatternDisplay() {
+            const selectedPatternValue = document.getElementById('regex-pattern').value;
+            document.getElementById('current-pattern').textContent = patterns[selectedPatternValue];
+        }
+
+        // Initialize the pattern display
+        document.addEventListener('DOMContentLoaded', updatePatternDisplay);
+        document.getElementById('regex-pattern').addEventListener('change', updatePatternDisplay);
+
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                this.classList.add('active');
+
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                // Show selected tab content
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Validation functionality
+        document.getElementById('validate-btn').addEventListener('click', validateStrings);
+
+        function validateStrings() {
+            const inputStringsRaw = document.getElementById('input-strings').value;
+            // Handle potential empty lines more robustly, especially if the input is just whitespace
+            const inputStrings = inputStringsRaw.split('\n').map(s => s.trim()).filter(s => s !== '');
+            const patternSelect = document.getElementById('regex-pattern');
+            const selectedPatternValue = patternSelect.value;
+
+            let resultsHTML = '<table><thead><tr><th>String</th><th>Status</th><th>Explanation</th></tr></thead><tbody>'; // Added <thead> & <tbody>
+
+            if (inputStrings.length === 0 && inputStringsRaw.trim() !== '') { // Handle case where input might be spaces leading to no strings after filter
+                 resultsHTML += '<tr><td colspan="3">No valid strings entered. Please enter strings, one per line.</td></tr>';
+            } else if (inputStrings.length === 0) {
+                 resultsHTML += '<tr><td colspan="3">Please enter strings to validate.</td></tr>';
+            } else {
+                for (const str of inputStrings) {
+                    // const trimmedStr = str.trim(); // Already trimmed by map and filter
+                    // if (trimmedStr === '') continue; // Already filtered
+
+                    const result = selectedPatternValue === 'pattern1'
+                        ? validatePattern1(str)
+                        : validatePattern2(str);
+
+                    resultsHTML += `<tr>
+                        <td>${escapeHTML(str)}</td>
+                        <td class="${result.isValid ? 'valid' : 'invalid'}">${result.isValid ? 'Valid' : 'Invalid'}</td>
+                        <td>${escapeHTML(result.explanation)}</td>
+                    </tr>`;
+                }
+            }
+
+            resultsHTML += '</tbody></table>';
+            document.getElementById('result-content').innerHTML = resultsHTML;
+        }
+
+        // Helper function to escape HTML special characters to prevent XSS
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        function validatePattern1(str) {
+            // Check if string contains only 0s and 1s
+            if (!/^[01]+$/.test(str) && str !== "") { // Allow empty string to be caught by regex if applicable, or handle as invalid
+                 return { isValid: false, explanation: "String must contain only 0s and 1s (or be empty if pattern allows)" };
+            }
+             if (str === "" && !patterns.pattern1.includes("()*") && !patterns.pattern1.startsWith("(")) { // Basic check if empty string could be valid
+                // More sophisticated check needed if empty string validity is complex
+                // For these patterns, empty string would not match mandatory parts.
+                // A truly robust check for empty string requires analyzing the regex structure.
+                // The regex itself will correctly determine if empty string is valid.
+            }
+
+
+            // The regex pattern parts (using | for OR as in standard RegExp)
+            const p1 = "(1|0)*";                    // (1+0)*
+            const p2 = "(11|00|101|010)";           // (11+00+101+010)
+            const p3 = "(11|00)*";                  // (11+00)*
+            const p4 = "(11|00|0|1)";               // (11+00+0+1)
+            const p5 = "(1|0|11)";                  // (1+0+11)
+            const p6 = "(11|00)*";                  // (11+00)*
+            const p7 = "(101|000|111)";             // (101+000+111)
+            const p8 = "(1|0)*";                    // (1+0)*
+            const p9 = "(101|000|111|001|100)";     // (101+000+111+001+100)
+            const p10 = "(11|00|1|0)*";             // (11+00+1+0)* -> effectively (1|0)*
+
+            // Combine all parts into a single regex, anchored to start and end
+            const fullPatternString = "^" + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + "$";
+            const regex = new RegExp(fullPatternString);
+
+            if (regex.test(str)) {
+                return { isValid: true, explanation: "Matches the pattern" };
+            } else {
+                // Basic length check (sum of min lengths of mandatory parts)
+                // p2 (2), p4 (1), p5 (1), p7 (3), p9 (3) = min 10
+                if (str.length > 0 && str.length < 10 && /^[01]+$/.test(str)) { // only if not empty and is binary
+                    return { isValid: false, explanation: "String is too short. Minimum length for core components is 10 characters." };
+                }
+                if (str === "") {
+                     return { isValid: false, explanation: "String is empty and does not match the pattern."};
+                }
+                // More detailed explanation attempts (can be complex)
+                let explanation = "Does not match the full pattern structure. ";
+                // Example: Check for mandatory part p2
+                const p1Regex = new RegExp("^" + p1);
+                let remainingStr = str.replace(p1Regex, ""); // Consume optional p1
+
+                const p2Regex = new RegExp("^" + p2);
+                if (!p2Regex.test(remainingStr)) {
+                    explanation += `After optional prefix '${p1}', failed to find required segment '${p2}'.`;
+                    return { isValid: false, explanation };
+                }
+                // ... further checks can be added but become complex for full diagnosis
+                return { isValid: false, explanation: "Does not match the required sequence of pattern components." };
+            }
+        }
+
+        function validatePattern2(str) {
+            // Check if string contains only a's and b's
+            if (!/^[ab]+$/.test(str) && str !== "") {
+                 return { isValid: false, explanation: "String must contain only a's and b's (or be empty if pattern allows)" };
+            }
+             if (str === "" && !patterns.pattern2.includes("()*") && !patterns.pattern2.startsWith("(")) {
+                // As with pattern1, regex itself will handle empty string.
+            }
+
+
+            const p1 = "(a|b)*";                    // (a+b)*
+            const p2 = "(aa|bb)";                   // (aa+bb)
+            const p3 = "(aa|bb)*";                  // (aa+bb)*
+            const p4 = "(ab|ba|aba)";               // (ab+ba+aba)
+            const p5 = "(bab|aba|bbb)";             // (bab+aba+bbb)
+            const p6 = "(a|b|bb|aa)*";              // (a+b+bb+aa)* -> effectively (a|b)*
+            const p7 = "(bb|aa|aba)";               // (bb+aa|aba)
+            const p8 = "(aaa|bab|bba)";             // (aaa+bab+bba)
+            const p9 = "(aaa|bab|bba)*";            // (aaa+bab+bba)*
+
+            const fullPatternString = "^" + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + "$";
+            const regex = new RegExp(fullPatternString);
+
+            if (regex.test(str)) {
+                return { isValid: true, explanation: "Matches the pattern" };
+            } else {
+                // Basic length check (sum of min lengths of mandatory parts)
+                // p2(2), p4(2), p5(3), p7(2), p8(3) = min 12
+                if (str.length > 0 && str.length < 12 && /^[ab]+$/.test(str)) {
+                    return { isValid: false, explanation: "String is too short. Minimum length for core components is 12 characters." };
+                }
+                if (str === "") {
+                     return { isValid: false, explanation: "String is empty and does not match the pattern."};
+                }
+                return { isValid: false, explanation: "Does not match the required sequence of pattern components." };
+            }
+        }
+    </script>
+</body>
+</html>
