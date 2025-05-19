@@ -282,9 +282,7 @@
             } else {
                 // Basic length check (sum of min lengths of mandatory parts)
                 // p2 (2), p4 (1), p5 (1), p7 (3), p9 (3) = min 10
-                if (str.length > 0 && str.length < 10 && /^[01]+$/.test(str)) { // only if not empty and is binary
-                    return { isValid: false, explanation: "String is too short. Minimum length for core components is 10 characters." };
-                }
+              
                 if (str === "") {
                      return { isValid: false, explanation: "String is empty and does not match the pattern."};
                 }
@@ -294,11 +292,7 @@
                 const p1Regex = new RegExp("^" + p1);
                 let remainingStr = str.replace(p1Regex, ""); // Consume optional p1
 
-                const p2Regex = new RegExp("^" + p2);
-                if (!p2Regex.test(remainingStr)) {
-                    explanation += `After optional prefix '${p1}', failed to find required segment '${p2}'.`;
-                    return { isValid: false, explanation };
-                }
+                
                 // ... further checks can be added but become complex for full diagnosis
                 return { isValid: false, explanation: "Does not match the required sequence of pattern components." };
             }
@@ -330,11 +324,8 @@
             if (regex.test(str)) {
                 return { isValid: true, explanation: "Matches the pattern" };
             } else {
-                // Basic length check (sum of min lengths of mandatory parts)
-                // p2(2), p4(2), p5(3), p7(2), p8(3) = min 12
-                if (str.length > 0 && str.length < 12 && /^[ab]+$/.test(str)) {
-                    return { isValid: false, explanation: "String is too short. Minimum length for core components is 12 characters." };
-                }
+               
+                
                 if (str === "") {
                      return { isValid: false, explanation: "String is empty and does not match the pattern."};
                 }
