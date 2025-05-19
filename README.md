@@ -1,1 +1,1 @@
-# Automatangina
+# Automat
